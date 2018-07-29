@@ -1,15 +1,15 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const {readPdf} = require('../services/billService.js');
 
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Bill' });
+const router = express.Router();
+
+router.get('/', function (req, res, next) {
+  res.render('index', {title: 'Bill'});
 });
 
-router.get('/bill', function(req, res, next) {
+router.get('/bill', function (req, res, next) {
 
-
-  res.send({title: 'Bill'});
+  readPdf('../resources/avro.pdf', res, next);
 });
-
 
 module.exports = router;
