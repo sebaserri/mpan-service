@@ -2,21 +2,22 @@ const fs = require('fs');
 const path = require('path');
 const PDFParser = require('pdf2json');
 
-module.exports = {
-  readPdf: (pdfFilename, res, next) => {
+exports.readPdf = (pdfFilename) => {
+  return new Promise((resolve, reject) => {
     let file = path.join(__dirname.replace('services', 'resources'), pdfFilename);
-    let fileJson = path.join(__dirname.replace('services', 'resources'), "avron.json");
+    let fileJson = path.join(__dirname.replace('services', 'resources'), `${pdfFilename}.txt`);
     _pdfToString(file, fileJson).then((filename) => {
-
-      _findMpam(filename);
-
-      res.send(filename);
+      _read(filename).then((data) => {
+        let mpan = _fetchMpan(data);
+        resolve(mpan);
+      });
     }).catch((e) => {
       console.error(e);
-      next(e);
+      reject(e);
     });
-  }
+  });
 };
+
 
 _pdfToString = (file, fileJson) => {
   return new Promise((resolve, reject) => {
@@ -33,11 +34,37 @@ _pdfToString = (file, fileJson) => {
   });
 };
 
-_findMpam = (filename) => {
-
-  fs.readFile(filename, "utf-8", (err, data) => {
-   console.log(data);
+_read = (filename) => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filename, "utf-8", (err, data) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(data);
+    });
   });
+};
 
+_fetchMpan = (data) => {
+  data = data.replace(/\r?\n|\r/g, '');
+  let mpanIndex = data.search(/mpan/i);
+  if (mpanIndex <0) {
+    mpanIndex = data.search(/supply number/i);
+  }
+  let found = false;
+  let mpan = [];
 
+  for(let i = mpanIndex; i <= data.length; i++) {
+    let c = data.charAt(i);
+    if (c.toUpperCase() === 's'.toUpperCase() && _isNumeric(data.charAt(i+1))) {
+      found = true;
+    } else if (found && _isNumeric(c) && mpan.length < 21) {
+      mpan.push(c);
+    }
+  }
+  return mpan.join('');
+};
+
+_isNumeric = (n) => {
+  return !isNaN(parseFloat(n)) && isFinite(n);
 };
