@@ -3,11 +3,7 @@ const {readPdf} = require('../services/billService.js');
 
 const router = express.Router();
 
-router.get('/', function (req, res) {
-  res.render('index', {title: 'Bills'});
-});
-
-router.get('/bill', function (req, res, next) {
+router.get('/', function (req, res, next) {
   let a = readPdf('avro.pdf');
   let e = readPdf('edf.pdf');
   let i = readPdf('isupply.pdf');
